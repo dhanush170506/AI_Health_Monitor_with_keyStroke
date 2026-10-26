@@ -434,13 +434,16 @@ function renderLive(data) {
   $("assess-timer").textContent = fmtClock(data.elapsed_seconds || 0);
 
   // calibration banners
-  const est = data.baseline && data.baseline.established;
+  const est = data.baseline && data.baseline.established &&
+    data.behavioral_baseline && data.behavioral_baseline.established;
   $("calib-banner").classList.toggle("hidden", !(data.calibrating && data.monitoring_active));
   $("calib-done").classList.toggle("hidden", !est);
   $("calib-none").classList.toggle("hidden", est || data.calibrating);
   if (data.calibrating && data.monitoring_active) {
     $("calib-countdown").textContent =
-      Math.ceil((data.calibration_remaining || 0) / 60) + " min remaining.";
+      data.baseline && data.baseline.established
+        ? "Collecting at least five valid windows per interaction mode."
+        : Math.ceil((data.calibration_remaining || 0) / 60) + " min remaining.";
   }
 
   // metrics: prefer server features (analysis truth), fill gaps with local
@@ -455,10 +458,10 @@ function renderLive(data) {
   $(ids.wpm).textContent = pick(f.typing_speed_wpm, local.wpm, 1);
   $(ids.dwell).textContent = pick(f.avg_dwell_time, local.dwell, 0);
   $(ids.flight).textContent = pick(f.avg_flight_time, local.flight, 0);
-  $(ids.mspeed).textContent = pick(f.mouse_speed, local.mspeed, 0);
+  $(ids.mspeed).textContent = pick(f.mouse_average_velocity, local.mspeed, 0);
   if (!state.continueMode) {
     $("m-backspace").textContent = fmtNum(f.backspace_rate, 1);
-    $("m-jitter").textContent = fmtNum(f.mouse_jitter, 3);
+    $("m-jitter").textContent = fmtNum(f.mouse_jitter_index, 3);
     $("m-acq").textContent = fmtNum(
       f.target_acquisition_time !== undefined ? f.target_acquisition_time : local.acq, 0);
     $("m-errors").textContent = state.totalErrors;
@@ -468,13 +471,29 @@ function renderLive(data) {
   const r = data.last_result;
   const hasResult = !!r;
   $("collecting-msg").classList.toggle("visible", !hasResult);
+  if (!hasResult) {
+    $("collecting-msg").textContent = data.insufficient
+      ? "Insufficient activity in this window — continue the assessment to collect more data."
+      : "Collecting more behavioural data…";
+  }
   $("assess-current").classList.toggle("hidden", !hasResult);
   if (hasResult) {
-    $("ac-fatigue").textContent = r.fatigue_score + "%";
-    $("ac-stress").textContent = r.stress_score + "%";
-    $("ac-anxiety").textContent = r.anxiety_score + "%";
-    $("ac-motor").textContent = r.motor_risk_score + "%";
-    $("ac-overall").textContent = r.overall_status;
+    const isDemo = !!r.demo_scenario;
+    const indicators = (r.behavioral_analysis || {}).indicators || {};
+    const format = (item) => !item ? "Insufficient data"
+      : item.score === null ? item.status
+        : item.status + " · " + item.score + "%";
+    $("ac-fatigue").textContent = isDemo ? r.fatigue_score + "%"
+      : format(indicators.fatigue);
+    $("ac-stress").textContent = isDemo ? r.stress_score + "%"
+      : format(indicators.stress_tension);
+    $("ac-anxiety").textContent = isDemo ? r.anxiety_score + "%" : "Not scored";
+    $("ac-motor").textContent = isDemo ? r.motor_risk_score + "%"
+      : format(indicators.motor_consistency);
+    const complete = ["fatigue", "stress_tension", "motor_consistency"]
+      .every((key) => indicators[key] && indicators[key].score !== null);
+    $("ac-overall").textContent = isDemo ? r.overall_status
+      : complete ? "Cross-device indicators available" : "Insufficient data";
   }
 }
 

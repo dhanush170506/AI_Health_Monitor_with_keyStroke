@@ -12,6 +12,7 @@ Run:  python app.py   ->  http://127.0.0.1:5000
 """
 
 import math
+import logging
 import os
 import threading
 import time
@@ -20,6 +21,7 @@ from flask import Flask, jsonify, request, send_from_directory
 
 from backend.analyzer import analyze, band_label
 from backend.baseline import Baseline
+from backend.behavioural_analysis import BehaviouralAnalysis
 from backend.feature_engine import (extract_features, enough_data,
                                     clean_keyboard_events, clean_mouse_events)
 from backend.predictor import Predictor
@@ -29,12 +31,14 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 BASELINE_PATH = os.path.join(DATA_DIR, "baseline.json")
 REPORTS_PATH = os.path.join(DATA_DIR, "reports.json")
+BEHAVIOURAL_BASELINE_PATH = os.path.join(DATA_DIR, "behavioural_baseline.json")
 
 WINDOW_SECONDS = 60.0          # Module 9: 1-minute live analysis
 REPORT_EVERY_WINDOWS = 2       # Module 10: report per 2 minutes
 CALIBRATION_SECONDS = 120.0    # Module 5: default calibration (~2 minutes)
 
 app = Flask(__name__, static_folder=None)
+LOGGER = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +51,7 @@ class Monitor:
         self.predictor = Predictor()                      # model or None
         self.baseline = Baseline(BASELINE_PATH, CALIBRATION_SECONDS)
         self.baseline.load()                              # persist across restarts
+        self.behavioural = BehaviouralAnalysis(BEHAVIOURAL_BASELINE_PATH)
 
         self.reset_session(keep_baseline=True)
 
@@ -67,6 +72,7 @@ class Monitor:
             self.session_start = None
             self.next_window_at = None
             self.window_index = 0
+            self.valid_window_count = 0
             self.key_events = []      # [{t_down, t_up, is_backspace}] (seconds)
             self.mouse_events = []    # [{x, y, t, clicked}]
             self.history = []         # per-minute analysis results
@@ -80,6 +86,7 @@ class Monitor:
             self.target_acquisitions = []
             if not keep_baseline:
                 self.baseline.reset()
+                self.behavioural.reset()
 
     def start(self):
         with self.lock:
@@ -148,7 +155,7 @@ class Monitor:
                             self.next_window_at += WINDOW_SECONDS
             except Exception:
                 # Module 15: the monitor loop must never die
-                pass
+                LOGGER.exception("Minute analysis loop failed")
 
     def process_window(self, demo=False):
         """Analyze the events accumulated in the current window."""
@@ -168,6 +175,11 @@ class Monitor:
                                         n_chars_typed=n_chars or None,
                                         n_errors=n_errs,
                                         target_acquisitions=acq or None)
+        sufficient = enough_data(meta)
+        with self.lock:
+            behavioural = self.behavioural.analyze(
+                vector, meta, WINDOW_SECONDS, sufficient=sufficient,
+            )
         now = time.time()
 
         with self.lock:
@@ -176,11 +188,12 @@ class Monitor:
 
         # --- calibration phase (Module 5) ---
         if self.baseline.established is False and not demo:
-            if meta["n_key_events"] >= 3 or meta["n_mouse_points"] >= 5:
+            if sufficient:
                 self.baseline.add_calibration_sample(vector)
             with self.lock:
-                self.last_insufficient = not enough_data(meta)
-                # never clobber an existing (demo) result with None here
+                self.last_insufficient = not sufficient
+                if not sufficient:
+                    self.last_result = None
                 calib_left = max(0.0, self.baseline.calibration_seconds
                                  - (now - self.calibration_started))
                 self.calibration_remaining = calib_left
@@ -194,29 +207,39 @@ class Monitor:
                          self.baseline.established)
 
         with self.lock:
-            if not enough_data(meta) and not demo:
-                # insufficient live data -> honest message, keep any existing
-                # demo result visible on the dashboard
+            if not sufficient and not demo:
+                # Do not leave a previous window's scores displayed as current.
                 self.last_insufficient = True
+                self.last_result = None
                 return
             self.last_insufficient = False
             result["timestamp"] = report_engine._fmt_ts(now)
             result["window"] = self.window_index
-            result["vector"] = {k: round(v, 3) for k, v in vector.items()}
+            result["vector"] = {
+                k: round(v, 3) if v is not None else None
+                for k, v in vector.items()
+            }
             result["deviations"] = {k: round(v, 3) for k, v in deviations.items()}
+            result["behavioral_analysis"] = behavioural
+            result["valid"] = True
             self.last_result = result
             self.history.append(result)
+            self.valid_window_count += 1
             if len(self.history) > 180:
                 self.history = self.history[-180:]
 
             # Module 5: gentle incremental baseline update on normal-ish windows
-            self.baseline.update_incremental(vector)
+            if behavioural.get("baseline_updated"):
+                self.baseline.update_incremental(vector, rate=0.02)
 
             # Module 10: 2-minute report
-            if len(self.history) >= REPORT_EVERY_WINDOWS \
-                    and self.window_index % REPORT_EVERY_WINDOWS == 0:
+            if self.valid_window_count % REPORT_EVERY_WINDOWS == 0:
+                report_windows = [
+                    item for item in self.history
+                    if item.get("valid") and not item.get("demo_scenario")
+                ][-REPORT_EVERY_WINDOWS:]
                 rep = report_engine.build_report(
-                    self.history[-REPORT_EVERY_WINDOWS:], vector, deviations,
+                    report_windows, vector, deviations,
                     self.baseline.summary())
                 self.reports = report_engine.append_report(rep, REPORTS_PATH)
 
@@ -276,8 +299,15 @@ class Monitor:
             self.last_insufficient = False
             result["timestamp"] = report_engine._fmt_ts(now)
             result["window"] = f"demo-{self.demo_runs}"
-            result["vector"] = {k: round(v, 3) for k, v in vector.items()}
+            result["vector"] = {
+                k: round(v, 3) if v is not None else None
+                for k, v in vector.items()
+            }
             result["deviations"] = {k: round(v, 3) for k, v in deviations.items()}
+            result["behavioral_analysis"] = self.behavioural.analyze(
+                vector, meta, WINDOW_SECONDS, sufficient=True,
+                allow_learning=False,
+            )
             result["demo_scenario"] = scenario
             self.last_result = result
             self.history.append(result)
@@ -285,7 +315,7 @@ class Monitor:
                 self.history = self.history[-180:]
             # demo: a report after every scenario run (uses last 2 windows)
             rep = report_engine.build_report(
-                self.history[-report_engine.REPORT_INTERVAL_WINDOWS:], vector,
+                [result], vector,
                 deviations, self.baseline.summary())
             self.reports = report_engine.append_report(rep, REPORTS_PATH)
         return result
@@ -300,7 +330,13 @@ class Monitor:
                 "elapsed_seconds": int(elapsed),
                 "model_ready": self.predictor.ready,
                 "baseline": self.baseline.summary(),
-                "calibrating": bool(self.active and not self.baseline.established),
+                "behavioral_baseline": self.behavioural.summary(),
+                "calibrating": bool(
+                    self.active and (
+                        not self.baseline.established
+                        or not self.behavioural.summary()["established"]
+                    )
+                ),
                 "calibration_remaining": int(max(0.0, self.baseline.calibration_seconds
                                                  - (time.time() - self.calibration_started)))
                 if self.active and not self.baseline.established else 0,
@@ -323,10 +359,19 @@ class Monitor:
             reports = list(self.reports)
         trend = {
             "labels": [h.get("window", i + 1) for i, h in enumerate(history)],
-            "fatigue": [h["fatigue_score"] for h in history],
-            "stress": [h["stress_score"] for h in history],
-            "anxiety": [h["anxiety_score"] for h in history],
-            "motor": [h["motor_risk_score"] for h in history],
+            "fatigue": [
+                h.get("behavioral_analysis", {}).get("indicators", {})
+                .get("fatigue", {}).get("score") for h in history
+            ],
+            "stress": [
+                h.get("behavioral_analysis", {}).get("indicators", {})
+                .get("stress_tension", {}).get("score") for h in history
+            ],
+            "anxiety": [None for _ in history],
+            "motor": [
+                h.get("behavioral_analysis", {}).get("indicators", {})
+                .get("motor_consistency", {}).get("score") for h in history
+            ],
         }
         return {
             **st,

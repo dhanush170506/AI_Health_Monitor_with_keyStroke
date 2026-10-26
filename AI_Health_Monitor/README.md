@@ -34,6 +34,8 @@ runs a **trained Random Forest model**, and continuously reports estimated
 - **Privacy by design:** typed characters never leave the browser; only timing
   metadata, aggregate counters (chars typed, errors, target times) and in-area
   mouse coordinates are transmitted and stored.
+- Capture is limited to the assessment page's designated areas; this project
+  has no system-wide mouse listener and does not currently collect scroll events.
 
 ## 2. Architecture
 
@@ -71,7 +73,8 @@ AI_Health_Monitor/
 │   ├── feature_names.json  Canonical feature order for predictor.py
 │   └── training_report.json
 ├── backend/
-│   ├── feature_engine.py   Preprocessing + 16-feature extraction
+│   ├── feature_engine.py   Preprocessing + model and mouse feature extraction
+│   ├── behavioural_analysis.py Per-mode baselines and corroborated indicators
 │   ├── baseline.py         Personal baseline (calibration, z-scores, persistence)
 │   ├── predictor.py        Model loading, predict_proba, score fusion
 │   ├── analyzer.py         Motor-risk anomaly score + analyze() entry point
@@ -86,7 +89,8 @@ AI_Health_Monitor/
 │   ├── monitor.js          Dashboard rendering/polling (no capture)
 │   └── assessment.js       Typing test, mouse targets, timing-only capture
 └── data/
-    ├── baseline.json       Persisted personal baseline (auto-created)
+    ├── baseline.json       Persisted legacy model baseline (auto-created)
+    ├── behavioural_baseline.json Mode statistics and updater status (auto-created)
     └── reports.json        Persisted 2-minute reports (auto-created)
 ```
 
@@ -100,6 +104,26 @@ AI_Health_Monitor/
   time.
 - Defensive preprocessing: missing key-ups, duplicate mouse points, invalid
   timestamps, and empty windows never crash the pipeline or produce NaN/Infinity.
+- Mouse analysis reports mean/median/peak velocity (px/s), mean absolute
+  acceleration and acceleration variability (px/s²), path length (px),
+  per-movement-segment path efficiency (0–1), direction changes per active
+  second, pause duration/count, click interval mean (ms) and coefficient of
+  variation, and a deterministic conservative jitter proxy. Jitter is a
+  movement residual, not evidence of a symptom.
+- Three interaction modes are learned from event-derived window signatures
+  after at least 15 diverse valid windows using KMeans. Mode-specific indicator
+  baselines remain provisional until a mode has five windows. Corroborated
+  fatigue, stress/tension, and motor-consistency indicators require keyboard
+  **and** mouse contributions; missing data is not treated as agreement.
+- Each device contribution is normalized within that device, and the combined
+  deviation is normalized once across available feature weights. Agreement
+  requires both device deviations to be at least 0.5; corroborated combined
+  deviations below 1.5 are mild, and 1.5 or above are notable.
+- Guarded mode-baseline updates use α=0.02, update only for normal, sufficiently
+  active windows, and pause after three consecutive rising fast averages.
+- Raw mouse points are held only for the current 60-second analysis window and
+  are discarded after extraction. Persisted behavioral state contains only
+  aggregate signatures and feature statistics.
 - Personal baseline with configurable calibration (~2 min default), persisted to
   `data/baseline.json`, with incremental updates that ignore anomalous windows.
 - Motor Symptom Risk Indicator: statistical deviation score (0–100) across
@@ -137,6 +161,12 @@ python app.py
 
 Then open **http://127.0.0.1:5000** in your browser (URL is printed in the console).
 
+## 6.1 Run the behavioral feature tests
+
+```bat
+python -m unittest discover -s tests -v
+```
+
 ## 7. How to Start Monitoring (the assessment flow)
 
 1. On the dashboard click **▶ Start Monitoring** — a new tab opens:
@@ -149,9 +179,10 @@ Then open **http://127.0.0.1:5000** in your browser (URL is printed in the conso
    logs WPM / dwell / flight / errors per completed sentence.
 3. In the **Mouse Activity Area**, click the highlighted targets as they appear
    (acquisition time is measured automatically).
-4. First session: a **CALIBRATING PERSONAL BASELINE** banner shows for ~2
-   minutes of assessment activity, then switches to **PERSONAL BASELINE
-   ESTABLISHED**.
+4. The legacy model baseline can establish after the initial calibration
+   windows. The interaction-mode baseline remains provisional until there are
+   at least 15 diverse valid windows and at least five calibration windows in
+   each learned mode; this can take longer than the original two-minute period.
 5. Every 60 s the analysis updates on both tabs (the assessment shows a compact
    "Current behavioural state" panel); every 120 s a new **2-Minute Report**
    appears on the dashboard.

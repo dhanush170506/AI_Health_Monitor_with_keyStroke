@@ -147,6 +147,10 @@ body {
 .hc-band.low { color: #A9E8BC; background: rgba(110, 220, 138, .12); }
 .hc-band.moderate { color: #EAD9A0; background: rgba(230, 199, 106, .13); }
 .hc-band.elevated { color: #EFA8A8; background: rgba(229, 115, 115, .14); }
+.hc-band.normal { color: #A9E8BC; background: rgba(110, 220, 138, .12); }
+.hc-band.mild { color: #EAD9A0; background: rgba(230, 199, 106, .13); }
+.hc-band.notable { color: #EFA8A8; background: rgba(229, 115, 115, .14); }
+.hc-band.keyboard-only, .hc-band.mouse-only { color: #A9C8E8; background: rgba(110, 160, 220, .12); }
 
 .overall-line { margin-top: 12px; font-size: 14px; }
 .overall-line strong { letter-spacing: .5px; }

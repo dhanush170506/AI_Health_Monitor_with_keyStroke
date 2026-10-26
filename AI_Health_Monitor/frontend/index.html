@@ -59,12 +59,12 @@
           <span class="hc-band" id="b-stress">–</span>
         </div>
         <div class="health-card anxiety" id="hc-anxiety">
-          <span class="hc-label">Anxiety</span>
+          <span class="hc-label">Anxiety (legacy model)</span>
           <span class="hc-value" id="v-anxiety">–</span>
           <span class="hc-band" id="b-anxiety">–</span>
         </div>
         <div class="health-card motor" id="hc-motor">
-          <span class="hc-label">Motor Symptom Risk</span>
+          <span class="hc-label">Motor Consistency</span>
           <span class="hc-value" id="v-motor">–</span>
           <span class="hc-band" id="b-motor">–</span>
         </div>
@@ -121,9 +121,9 @@
       <svg id="trend-chart" viewBox="0 0 640 260" preserveAspectRatio="none" role="img" aria-label="Health trend chart"></svg>
       <div class="legend">
         <span class="lg"><i class="sw fatigue"></i>Fatigue</span>
-        <span class="lg"><i class="sw stress"></i>Stress</span>
-        <span class="lg"><i class="sw anxiety"></i>Anxiety</span>
-        <span class="lg"><i class="sw motor"></i>Motor Risk</span>
+        <span class="lg"><i class="sw stress"></i>Stress / tension</span>
+        <span class="lg"><i class="sw anxiety"></i>Anxiety (not scored)</span>
+        <span class="lg"><i class="sw motor"></i>Motor consistency</span>
       </div>
     </div>
 
@@ -138,8 +138,8 @@
         <div class="report-scores">
           <div class="metric"><span class="m-label">Fatigue</span><span class="m-value"><span id="r-fatigue">–</span><small>%</small></span></div>
           <div class="metric"><span class="m-label">Stress</span><span class="m-value"><span id="r-stress">–</span><small>%</small></span></div>
-          <div class="metric"><span class="m-label">Anxiety</span><span class="m-value"><span id="r-anxiety">–</span><small>%</small></span></div>
-          <div class="metric"><span class="m-label">Motor Risk</span><span class="m-value"><span id="r-motor">–</span><small>%</small></span></div>
+          <div class="metric"><span class="m-label">Anxiety (not scored)</span><span class="m-value"><span id="r-anxiety">–</span><small></small></span></div>
+          <div class="metric"><span class="m-label">Motor consistency</span><span class="m-value"><span id="r-motor">–</span><small>%</small></span></div>
         </div>
         <h3>Behavioural Changes</h3>
         <ul id="report-changes" class="report-changes"></ul>

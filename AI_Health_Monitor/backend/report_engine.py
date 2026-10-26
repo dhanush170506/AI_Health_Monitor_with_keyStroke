@@ -8,6 +8,7 @@ recommendation, and appends it to data/reports.json (atomic write).
 """
 
 import json
+import math
 import os
 import time
 from datetime import datetime, timezone
@@ -71,6 +72,9 @@ def behavioural_changes(vector, deviations, baseline_summary):
 def _recommendation_for(report):
     scores = [report["avg_fatigue"], report["avg_stress"],
               report["avg_anxiety"], report["avg_motor_risk"]]
+    scores = [score for score in scores if score is not None]
+    if not scores:
+        return "Insufficient valid activity windows to summarize."
     if report["overall_status"] == "NORMAL":
         return ("Your recent behaviour stayed close to your personal baseline. "
                 "Keep going comfortably.")
@@ -84,27 +88,86 @@ def _recommendation_for(report):
             "screening only - not a medical assessment.")
 
 
+def _summarize_indicators(window_results):
+    summaries = {}
+    names = ("fatigue", "stress_tension", "motor_consistency")
+    for name in names:
+        rows = [
+            result.get("behavioral_analysis", {}).get("indicators", {}).get(name, {})
+            for result in window_results
+        ]
+        scores = [float(row["score"]) for row in rows
+                  if row.get("score") is not None
+                  and row.get("corroborated") is True]
+        if scores and len(scores) == len(window_results):
+            score = int(round(sum(scores) / len(scores)))
+            status = ("Normal" if score == 0 else
+                      "Mild change" if score < 50 else "Notable change")
+        else:
+            score = None
+            statuses = {row.get("status") for row in rows}
+            if statuses == {"Keyboard-only change"}:
+                status = "Keyboard-only change"
+            elif statuses == {"Mouse-only change"}:
+                status = "Mouse-only change"
+            else:
+                status = "Insufficient data"
+        summaries[name] = {
+            "score": score,
+            "status": status,
+            "corroborated_windows": len(scores),
+            "valid_windows": len(window_results),
+        }
+    return summaries
+
+
 def build_report(window_results, vector, deviations, baseline_summary, now_epoch=None):
     """Build one report dict from the last two 1-minute analysis results."""
-    if not window_results:
+    recent = [
+        row for row in window_results[-REPORT_INTERVAL_WINDOWS:]
+        if row.get("valid", True)
+    ]
+    if not recent:
         return None
     now_epoch = now_epoch if now_epoch is not None else time.time()
-    recent = window_results[-REPORT_INTERVAL_WINDOWS:]
     n = len(recent)
 
     def avg(key):
-        return int(round(sum(r[key] for r in recent) / n)) if n else 0
+        values = [
+            float(row[key]) for row in recent
+            if row.get(key) is not None
+            and math.isfinite(float(row[key]))
+        ]
+        return int(round(sum(values) / len(values))) if values else None
 
+    fatigue, stress = avg("fatigue_score"), avg("stress_score")
+    anxiety, motor = avg("anxiety_score"), avg("motor_risk_score")
+    values = [value for value in (fatigue, stress, anxiety, motor)
+              if value is not None]
+    behavioral_indicators = _summarize_indicators(recent)
+    behavioral_scores = [
+        item["score"] for item in behavioral_indicators.values()
+        if item["score"] is not None
+    ]
+    if len(behavioral_scores) != len(behavioral_indicators):
+        behavioral_status = "Insufficient data"
+    else:
+        highest = max(behavioral_scores)
+        behavioral_status = (
+            "Normal" if highest == 0 else
+            "Mild change" if highest < 50 else "Notable change"
+        )
     rep = {
         "start_time": _fmt_ts(now_epoch - 60.0 * (n - 1)),
         "end_time": _fmt_ts(now_epoch),
-        "avg_fatigue": avg("fatigue_score"),
-        "avg_stress": avg("stress_score"),
-        "avg_anxiety": avg("anxiety_score"),
-        "avg_motor_risk": avg("motor_risk_score"),
-        "overall_status": band(max(avg("fatigue_score"), avg("stress_score"),
-                                   avg("anxiety_score"), avg("motor_risk_score"))),
+        "avg_fatigue": fatigue,
+        "avg_stress": stress,
+        "avg_anxiety": anxiety,
+        "avg_motor_risk": motor,
+        "overall_status": band(max(values)) if values else "INSUFFICIENT",
+        "behavioral_status": behavioral_status,
         "behavioural_changes": behavioural_changes(vector, deviations, baseline_summary),
+        "behavioral_indicators": behavioral_indicators,
     }
     rep["recommendation"] = _recommendation_for(rep)
     return rep

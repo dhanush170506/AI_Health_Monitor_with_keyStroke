@@ -147,11 +147,14 @@ function renderLive(data) {
   if (data.calibrating && data.monitoring_active) {
     calibBanner.classList.remove("hidden");
     $("calibration-countdown").textContent =
-      Math.ceil(data.calibration_remaining / 60) + " min remaining.";
+      data.baseline && data.baseline.established
+        ? "Collecting at least five valid windows per interaction mode."
+        : Math.ceil(data.calibration_remaining / 60) + " min remaining.";
   } else {
     calibBanner.classList.add("hidden");
   }
-  if (data.baseline && data.baseline.established) {
+  if (data.baseline && data.baseline.established &&
+      data.behavioral_baseline && data.behavioral_baseline.established) {
     calibDone.classList.remove("hidden");
   } else {
     calibDone.classList.add("hidden");
@@ -161,40 +164,92 @@ function renderLive(data) {
   const r = data.last_result;
   const collecting = !r;
   $("collecting-msg").classList.toggle("visible", collecting);
+  if (collecting) {
+    $("collecting-msg").textContent = data.insufficient
+      ? "Insufficient activity in this window — move and type in the assessment to collect more data."
+      : "Collecting more behavioural data…";
+    ["v-fatigue", "v-stress", "v-anxiety", "v-motor"].forEach((id) => {
+      $(id).textContent = "–";
+    });
+    ["b-fatigue", "b-stress", "b-anxiety", "b-motor"].forEach((id) => {
+      setBand($(id), "INSUFFICIENT");
+    });
+    $("overall-line").classList.add("hidden");
+    $("explanation").innerHTML = "";
+    $("indicators").innerHTML = "";
+  }
   if (r) {
-    $("v-fatigue").textContent = r.fatigue_score + "%";
-    $("v-stress").textContent = r.stress_score + "%";
-    $("v-anxiety").textContent = r.anxiety_score + "%";
-    $("v-motor").textContent = r.motor_risk_score + "%";
-    setBand($("b-fatigue"), r.fatigue_band);
-    setBand($("b-stress"), r.stress_band);
-    setBand($("b-anxiety"), r.anxiety_band);
-    setBand($("b-motor"), r.motor_band);
+    const isDemo = !!r.demo_scenario;
+    const behavioural = r.behavioral_analysis || {};
+    const behaviouralIndicators = behavioural.indicators || {};
+    const cards = [
+      ["fatigue", "v-fatigue", "b-fatigue", r.fatigue_score, r.fatigue_band],
+      ["stress_tension", "v-stress", "b-stress", r.stress_score, r.stress_band],
+      ["motor_consistency", "v-motor", "b-motor",
+        r.motor_risk_score, r.motor_band],
+    ];
+    cards.forEach(([key, valueId, bandId, demoScore, demoBand]) => {
+      const item = behaviouralIndicators[key];
+      const score = isDemo ? demoScore : item && item.score;
+      const status = isDemo ? demoBand : item ? item.status : "Insufficient data";
+      $(valueId).textContent = score === null || score === undefined
+        ? "–" : score + "%";
+      setBand($(bandId), status);
+    });
+    $("v-anxiety").textContent = isDemo ? r.anxiety_score + "%" : "–";
+    setBand($("b-anxiety"), isDemo ? r.anxiety_band : "Not scored");
 
     $("overall-line").classList.remove("hidden");
     const os = $("overall-status");
-    os.textContent = r.overall_status;
-    os.className = r.overall_status;
+    const complete = cards.every(([key]) =>
+      behaviouralIndicators[key] &&
+      behaviouralIndicators[key].score !== null);
+    const statuses = cards.map(([key]) =>
+      behaviouralIndicators[key] && behaviouralIndicators[key].status);
+    const behavioralStatus = complete
+      ? (statuses.includes("Notable change") ? "Notable change"
+        : statuses.includes("Mild change") ? "Mild change" : "Normal")
+      : "Insufficient data";
+    os.textContent = isDemo ? r.overall_status : behavioralStatus;
+    os.className = isDemo ? r.overall_status : behavioralStatus;
 
     const ex = $("explanation");
     ex.innerHTML = "";
-    (r.explanation || []).forEach((t) => {
+    const explanation = isDemo ? (r.explanation || []) : [
+      "Indicators require keyboard and mouse agreement and are not medical diagnoses.",
+    ];
+    explanation.forEach((t) => {
       const li = document.createElement("li");
       li.textContent = t;
       ex.appendChild(li);
     });
 
     const rec = $("recommendation");
-    rec.textContent = "💡 " + (r.recommendation || "");
+    rec.textContent = "💡 " + (isDemo
+      ? (r.recommendation || "")
+      : "Use the indicators as non-medical comparisons with your personal interaction-mode baseline.");
     rec.classList.remove("hidden");
 
     const ind = $("indicators");
     ind.innerHTML = "";
-    (r.indicators || []).forEach((t) => {
+    Object.entries(behaviouralIndicators).forEach(([name, item]) => {
+      const li = document.createElement("li");
+      const score = item.score === null ? "—" : item.score + "%";
+      li.textContent = name.replace(/_/g, " ") + ": " + item.status +
+        " (" + score + ")";
+      ind.appendChild(li);
+    });
+    (isDemo ? (r.indicators || []) : []).forEach((t) => {
       const li = document.createElement("li");
       li.textContent = "⚠ " + t;
       ind.appendChild(li);
     });
+    if (behavioural.mode_status) {
+      const li = document.createElement("li");
+      li.textContent = "Interaction mode: " + behavioural.mode_status +
+        (behavioural.mode ? " (" + behavioural.mode + ")" : "");
+      ind.appendChild(li);
+    }
   }
 
   // features
@@ -206,12 +261,16 @@ function renderLive(data) {
     $("m-backspace").textContent = fmtNum(f.backspace_rate, 1);
     $("m-errors").textContent = fmtNum(f.error_rate, 1);
     $("m-tpause").textContent = fmtNum(f.typing_pause_duration, 0);
-    $("m-mspeed").textContent = fmtNum(f.mouse_speed, 0);
-    $("m-accel").textContent = fmtNum(f.mouse_acceleration, 0);
-    $("m-jitter").textContent = fmtNum(f.mouse_jitter, 3);
-    $("m-eff").textContent = fmtNum(f.mouse_efficiency, 2);
+    $("m-mspeed").textContent = fmtNum(f.mouse_average_velocity, 0);
+    $("m-accel").textContent = fmtNum(f.mouse_mean_absolute_acceleration, 0);
+    $("m-jitter").textContent = fmtNum(f.mouse_jitter_index, 3);
+    $("m-eff").textContent = fmtNum(f.mouse_path_efficiency, 2);
     $("m-clicks").textContent = fmtNum(f.click_rate, 1);
     $("m-acq").textContent = fmtNum(f.target_acquisition_time, 0);
+  } else if (data.insufficient) {
+    ["m-wpm", "m-dwell", "m-flight", "m-backspace", "m-errors", "m-tpause",
+      "m-mspeed", "m-accel", "m-jitter", "m-eff", "m-clicks", "m-acq"]
+      .forEach((id) => { $(id).textContent = "–"; });
   }
 
   // baseline panel
@@ -221,6 +280,9 @@ function renderLive(data) {
     bs.textContent = bl.established
       ? "✔ Established from " + bl.n_samples + " calibration window(s)"
       : (data.calibrating ? "Calibrating — complete the assessment to build it…" : "Not established yet");
+    if (data.behavioral_baseline && !data.behavioral_baseline.established) {
+      bs.textContent += " · Interaction-mode baseline provisional";
+    }
     bs.className = "baseline-status" + (bl.established ? " established" : "");
     const d = bl.display || {};
     $("bl-wpm").textContent = fmtNum(d.typing_speed_wpm, 1);
@@ -263,12 +325,15 @@ function renderReports(reports) {
   const newest = reports[0];
   $("report-range").textContent = newest.start_time + "  →  " + newest.end_time;
   const ro = $("report-overall");
-  ro.textContent = newest.overall_status;
-  ro.className = "report-overall " + newest.overall_status;
-  $("r-fatigue").textContent = newest.avg_fatigue;
-  $("r-stress").textContent = newest.avg_stress;
-  $("r-anxiety").textContent = newest.avg_anxiety;
-  $("r-motor").textContent = newest.avg_motor_risk;
+  ro.textContent = newest.behavioral_status || "Insufficient data";
+  ro.className = "report-overall " + ro.textContent.replace(/ /g, "-");
+  const indicators = newest.behavioral_indicators || {};
+  const reportScore = (key) => indicators[key] &&
+    indicators[key].score !== null ? indicators[key].score : "–";
+  $("r-fatigue").textContent = reportScore("fatigue");
+  $("r-stress").textContent = reportScore("stress_tension");
+  $("r-anxiety").textContent = "–";
+  $("r-motor").textContent = reportScore("motor_consistency");
 
   const ch = $("report-changes");
   ch.innerHTML = "";
@@ -277,7 +342,14 @@ function renderReports(reports) {
     li.textContent = t;
     ch.appendChild(li);
   });
-  $("report-recommendation").textContent = "💡 " + (newest.recommendation || "");
+  Object.entries(newest.behavioral_indicators || {}).forEach(([name, item]) => {
+    const li = document.createElement("li");
+    li.textContent = name.replace(/_/g, " ") + ": " + item.status +
+      " (" + (item.score === null ? "—" : item.score + "%") + ")";
+    ch.appendChild(li);
+  });
+  $("report-recommendation").textContent =
+    "Behavioral indicators are non-medical activity comparisons, not diagnoses.";
 
   history.innerHTML = "";
   reports.slice(0, 10).forEach((rep) => {
@@ -286,14 +358,19 @@ function renderReports(reports) {
     const head = document.createElement("div");
     head.className = "ri-head";
     head.innerHTML = "<span>" + rep.start_time + "</span>" +
-      "<b class='" + rep.overall_status + "'>" + rep.overall_status + "</b>";
+      "<b class='" + (rep.behavioral_status || "Insufficient data") + "'>" +
+      (rep.behavioral_status || "Insufficient data") + "</b>";
     const scores = document.createElement("div");
     scores.className = "ri-scores";
+    const repIndicators = rep.behavioral_indicators || {};
+    const showReportScore = (key) => repIndicators[key] &&
+      repIndicators[key].score !== null
+        ? repIndicators[key].score + "%" : "–";
     scores.innerHTML =
-      "<span class='ri-f'>F " + rep.avg_fatigue + "%</span>" +
-      "<span class='ri-s'>S " + rep.avg_stress + "%</span>" +
-      "<span class='ri-a'>A " + rep.avg_anxiety + "%</span>" +
-      "<span class='ri-m'>M " + rep.avg_motor_risk + "%</span>";
+      "<span class='ri-f'>F " + showReportScore("fatigue") + "</span>" +
+      "<span class='ri-s'>S " + showReportScore("stress_tension") + "</span>" +
+      "<span class='ri-a'>A –</span>" +
+      "<span class='ri-m'>M " + showReportScore("motor_consistency") + "</span>";
     div.appendChild(head);
     div.appendChild(scores);
     history.appendChild(div);
@@ -310,9 +387,9 @@ function drawTrend(trend) {
   const labels = trend.labels || [];
   const series = [
     { key: "fatigue", color: "var(--fatigue)", vals: trend.fatigue || [] },
-    { key: "stress", color: "var(--stress)", vals: trend.stress || [] },
-    { key: "anxiety", color: "var(--anxiety)", vals: trend.anxiety || [] },
-    { key: "motor", color: "var(--motor)", vals: trend.motor || [] },
+    { key: "stress/tension", color: "var(--stress)", vals: trend.stress || [] },
+    { key: "anxiety (not scored)", color: "var(--anxiety)", vals: trend.anxiety || [] },
+    { key: "motor consistency", color: "var(--motor)", vals: trend.motor || [] },
   ];
   const n = Math.max(labels.length, 1);
   const x = (i) => PAD_L + (i / Math.max(n - 1, 1)) * (W - PAD_L - PAD_R);
@@ -333,14 +410,27 @@ function drawTrend(trend) {
   series.forEach((s) => {
     if (!s.vals.length) return;
     let d = "";
+    let penDown = false;
     s.vals.forEach((v, i) => {
-      d += (i === 0 ? "M" : "L") + x(i).toFixed(1) + "," + y(v).toFixed(1);
+      if (v === null || v === undefined || !Number.isFinite(Number(v))) {
+        penDown = false;
+        return;
+      }
+      d += (penDown ? "L" : "M") + x(i).toFixed(1) + "," + y(v).toFixed(1);
+      penDown = true;
     });
-    g += "<path d='" + d + "' fill='none' stroke='" + s.color +
-      "' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/>";
-    const lv = s.vals[s.vals.length - 1];
-    g += "<circle cx='" + x(s.vals.length - 1).toFixed(1) + "' cy='" + y(lv).toFixed(1) +
-      "' r='3.5' fill='" + s.color + "'/>";
+    if (d) {
+      g += "<path d='" + d + "' fill='none' stroke='" + s.color +
+        "' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/>";
+      for (let i = s.vals.length - 1; i >= 0; i--) {
+        if (s.vals[i] !== null && s.vals[i] !== undefined &&
+            Number.isFinite(Number(s.vals[i]))) {
+          g += "<circle cx='" + x(i).toFixed(1) + "' cy='" + y(s.vals[i]).toFixed(1) +
+            "' r='3.5' fill='" + s.color + "'/>";
+          break;
+        }
+      }
+    }
   });
 
   if (labels.length) {
