@@ -1,0 +1,115 @@
+/* AI Health Monitor - Behavioural Assessment page styles
+   Theme: dark charcoal + soft green healthcare palette */
+
+.assessment-layout {
+  display: grid; grid-template-columns: minmax(420px, 1.6fr) minmax(300px, 1fr);
+  gap: 16px; padding: 24px; max-width: 1280px; margin: 0 auto;
+}
+.col-main, .col-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* ---------- progress header ---------- */
+.assess-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 18px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.progress-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 4px; }
+.progress-value { font-size: 16px; font-weight: 700; letter-spacing: .4px; }
+.progress-bar { width: 220px; max-width: 100%; height: 6px; border-radius: 4px; background: var(--panel-3); border: 1px solid var(--line); margin-top: 7px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0%; border-radius: 4px; background: var(--accent); transition: width .35s ease; }
+.timer-block { text-align: right; }
+.assess-timer { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
+
+/* ---------- sentence display (typing-test stage) ---------- */
+.sentence-stage {
+  background: var(--panel-3); border: 1px solid var(--line); border-radius: 10px;
+  padding: 22px 24px; min-height: 96px; display: flex; align-items: center;
+}
+.sentence-display {
+  font-size: 24px; line-height: 1.75; letter-spacing: .3px; font-weight: 500;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif; user-select: none;
+}
+.sentence-display .char { border-radius: 3px; padding: 0 0.5px; transition: background .08s; }
+.sentence-display .char-pending { color: #6F8078; }
+.sentence-display .char-correct { color: #DFF3E6; }
+.sentence-display .char-wrong { color: #EFA8A8; background: rgba(229, 115, 115, .14); text-decoration: underline wavy rgba(229,115,115,.55); }
+.sentence-display .char-cursor { background: rgba(126, 217, 87, .3); animation: cursor-blink 1s steps(2) infinite; }
+@keyframes cursor-blink { 50% { background: rgba(126, 217, 87, .08); } }
+
+/* ---------- typing input ---------- */
+.typing-input-wrap { margin-top: 12px; }
+.typing-input {
+  width: 100%; background: var(--panel); color: var(--text);
+  border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px;
+  font-size: 16px; font-family: inherit;
+}
+.typing-input:focus { outline: none; border-color: rgba(126, 217, 87, .45); box-shadow: 0 0 0 3px rgba(126, 217, 87, .08); }
+.typing-hint-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.typing-hint { color: var(--muted); font-size: 12px; }
+.wpm-live { color: var(--accent); font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* ---------- mouse target task ---------- */
+.assess-mouse { height: 300px; }
+#target-layer { position: absolute; inset: 0; }
+.target {
+  position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px;
+  border-radius: 50%; border: 2px solid var(--accent);
+  background: radial-gradient(circle, rgba(126, 217, 87, .35), rgba(126, 217, 87, .08));
+  box-shadow: 0 0 10px rgba(126, 217, 87, .25); cursor: pointer;
+  animation: target-pop .25s ease-out;
+}
+.target.shrink { width: 30px; height: 30px; margin: -15px 0 0 -15px; }
+@keyframes target-pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.target.hit { border-color: var(--good); background: radial-gradient(circle, rgba(110, 220, 138, .35), rgba(110, 220, 138, .08)); animation: hit-fade .5s ease-out forwards; }
+@keyframes hit-fade { to { transform: scale(1.7); opacity: 0; } }
+.target-stats { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+.target-stats b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ---------- current behavioural state ---------- */
+.assess-current { margin-top: 12px; }
+.ac-title { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 8px; }
+.ac-grid { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 13.5px; color: #C6D4CC; }
+.ac-grid b { font-variant-numeric: tabular-nums; text-align: right; }
+.ac-overall { margin-top: 8px; font-size: 13.5px; }
+.ac-overall b.NORMAL { color: var(--good); }
+.ac-overall b.MODERATE { color: var(--warn); }
+.ac-overall b.ELEVATED { color: var(--bad); }
+
+/* ---------- sentence log ---------- */
+.sentence-log { display: flex; flex-direction: column; gap: 7px; max-height: 300px; overflow-y: auto; }
+.sl-item {
+  border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px;
+  padding: 8px 11px; font-size: 12.5px; animation: sl-in .25s ease-out;
+}
+@keyframes sl-in { from { opacity: 0; transform: translateY(-4px); } }
+.sl-item .sl-head { color: var(--good); font-weight: 600; letter-spacing: .4px; }
+.sl-item .sl-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 4px; color: #C6D4CC; font-variant-numeric: tabular-nums; }
+
+/* ---------- calibration card ---------- */
+#calib-banner, #calib-done { border-radius: 8px; margin-bottom: 8px; }
+
+/* ---------- completion view ---------- */
+.complete-card { text-align: center; padding: 30px 26px; }
+.complete-title {
+  font-size: 22px; letter-spacing: 2px; color: var(--good);
+  text-transform: uppercase; margin: 0 0 8px; font-weight: 700;
+}
+.complete-progress { font-size: 15px; color: var(--muted); margin-bottom: 18px; }
+.complete-metrics { text-align: left; margin-bottom: 18px; }
+.complete-msg { font-size: 15px; font-weight: 600; color: #D9E6DE; margin: 10px 0 4px; }
+.complete-msg.subtle { font-weight: 400; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.complete-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+
+/* ---------- continue view ---------- */
+#free-typing {
+  width: 100%; margin-top: 8px; background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 8px; padding: 12px;
+  font-size: 14px; font-family: inherit; resize: vertical;
+}
+#free-typing:focus { outline: none; border-color: rgba(126, 217, 87, .45); }
+#mouse-area-free { height: 220px; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .assessment-layout { grid-template-columns: 1fr; }
+  .sentence-display { font-size: 20px; }
+}

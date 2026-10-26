@@ -1,0 +1,46 @@
+{
+  "trained_at": "2026-09-12T10:11:16",
+  "note": "Synthetic behavioural data. NOT clinically validated. NOT a medical diagnostic model.",
+  "n_samples": 1440,
+  "n_features": 16,
+  "class_distribution": {
+    "NORMAL": 360,
+    "FATIGUE": 360,
+    "STRESS": 360,
+    "ANXIETY": 360
+  },
+  "train_accuracy": 0.9963,
+  "test_accuracy": 0.9806,
+  "confusion_matrix": [
+    [
+      90,
+      0,
+      0,
+      0
+    ],
+    [
+      2,
+      88,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      87,
+      3
+    ],
+    [
+      2,
+      0,
+      0,
+      88
+    ]
+  ],
+  "class_names": [
+    "NORMAL",
+    "FATIGUE",
+    "STRESS",
+    "ANXIETY"
+  ]
+}

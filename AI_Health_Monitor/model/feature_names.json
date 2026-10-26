@@ -1,0 +1,18 @@
+[
+  "typing_speed_wpm",
+  "avg_dwell_time",
+  "dwell_std",
+  "avg_flight_time",
+  "flight_std",
+  "backspace_rate",
+  "error_rate",
+  "typing_pause_duration",
+  "mouse_speed",
+  "mouse_speed_std",
+  "mouse_acceleration",
+  "mouse_pause_duration",
+  "mouse_jitter",
+  "mouse_efficiency",
+  "click_rate",
+  "target_acquisition_time"
+]

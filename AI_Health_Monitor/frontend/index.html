@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Health Monitoring System</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-icon">🫀</div>
+    <div>
+      <h1>AI HEALTH MONITORING SYSTEM</h1>
+      <p class="subtitle">Passive Behavioural Monitoring · keyboard &amp; mouse dynamics</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div id="status-pill" class="status-pill idle"><span class="dot"></span><span id="status-text">● Idle</span></div>
+    <div id="session-clock" class="session-clock">00:00</div>
+    <div class="header-actions">
+      <button id="btn-start" class="btn primary">▶ Start Monitoring</button>
+      <button id="btn-stop" class="btn" disabled>⏸ Stop</button>
+      <button id="btn-reset" class="btn danger">⟲ Reset Session</button>
+    </div>
+  </div>
+</header>
+
+<!-- CALIBRATION BANNER -->
+<div id="calibration-banner" class="banner calibrating hidden">
+  <strong>CALIBRATING PERSONAL BASELINE</strong> — type and move your mouse
+  normally. <span id="calibration-countdown"></span>
+</div>
+<div id="calibration-done" class="banner established hidden">
+  <strong>PERSONAL BASELINE ESTABLISHED</strong> — your normal behavioural
+  pattern has been saved locally.
+</div>
+
+<main class="layout">
+
+  <!-- LEFT COLUMN -->
+  <section class="col-left">
+
+    <div class="card" id="current-analysis">
+      <h2>Current Minute Analysis</h2>
+      <div id="collecting-msg" class="collecting visible">
+        Collecting more behavioural data…
+      </div>
+      <div class="health-grid">
+        <div class="health-card fatigue" id="hc-fatigue">
+          <span class="hc-label">Fatigue</span>
+          <span class="hc-value" id="v-fatigue">–</span>
+          <span class="hc-band" id="b-fatigue">–</span>
+        </div>
+        <div class="health-card stress" id="hc-stress">
+          <span class="hc-label">Stress</span>
+          <span class="hc-value" id="v-stress">–</span>
+          <span class="hc-band" id="b-stress">–</span>
+        </div>
+        <div class="health-card anxiety" id="hc-anxiety">
+          <span class="hc-label">Anxiety</span>
+          <span class="hc-value" id="v-anxiety">–</span>
+          <span class="hc-band" id="b-anxiety">–</span>
+        </div>
+        <div class="health-card motor" id="hc-motor">
+          <span class="hc-label">Motor Symptom Risk</span>
+          <span class="hc-value" id="v-motor">–</span>
+          <span class="hc-band" id="b-motor">–</span>
+        </div>
+      </div>
+      <div id="overall-line" class="overall-line hidden">
+        Overall status: <strong id="overall-status">–</strong>
+      </div>
+      <ul id="explanation" class="explanation"></ul>
+      <div id="recommendation" class="recommendation hidden"></div>
+      <ul id="indicators" class="indicators"></ul>
+    </div>
+
+    <div class="card">
+      <h2>Live Behavioural Metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric"><span class="m-label">Typing Speed</span><span class="m-value"><span id="m-wpm">–</span> <small>WPM</small></span></div>
+        <div class="metric"><span class="m-label">Avg Dwell</span><span class="m-value"><span id="m-dwell">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Avg Flight</span><span class="m-value"><span id="m-flight">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Backspace Rate</span><span class="m-value"><span id="m-backspace">–</span> <small>%</small></span></div>
+        <div class="metric"><span class="m-label">Error Rate</span><span class="m-value"><span id="m-errors">–</span> <small>%</small></span></div>
+        <div class="metric"><span class="m-label">Typing Pauses</span><span class="m-value"><span id="m-tpause">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Mouse Speed</span><span class="m-value"><span id="m-mspeed">–</span> <small>px/s</small></span></div>
+        <div class="metric"><span class="m-label">Mouse Accel</span><span class="m-value"><span id="m-accel">–</span> <small>px/s²</small></span></div>
+        <div class="metric"><span class="m-label">Mouse Jitter</span><span class="m-value"><span id="m-jitter">–</span></span></div>
+        <div class="metric"><span class="m-label">Mouse Efficiency</span><span class="m-value"><span id="m-eff">–</span></span></div>
+        <div class="metric"><span class="m-label">Click Rate</span><span class="m-value"><span id="m-clicks">–</span> <small>/min</small></span></div>
+        <div class="metric"><span class="m-label">Target Time</span><span class="m-value"><span id="m-acq">–</span> <small>ms</small></span></div>
+      </div>
+      <div id="live-events" class="hint" style="margin-top:10px;">0 keyboard events buffered</div>
+    </div>
+
+    <div class="card">
+      <h2>Personal Baseline</h2>
+      <div id="baseline-status" class="baseline-status">Not established</div>
+      <div class="metrics-grid baseline-grid">
+        <div class="metric"><span class="m-label">Typing Speed</span><span class="m-value"><span id="bl-wpm">–</span> <small>WPM</small></span></div>
+        <div class="metric"><span class="m-label">Dwell Time</span><span class="m-value"><span id="bl-dwell">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Flight Time</span><span class="m-value"><span id="bl-flight">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Error Rate</span><span class="m-value"><span id="bl-errors">–</span> <small>%</small></span></div>
+        <div class="metric"><span class="m-label">Mouse Speed</span><span class="m-value"><span id="bl-mspeed">–</span> <small>px/s</small></span></div>
+        <div class="metric"><span class="m-label">Mouse Jitter</span><span class="m-value"><span id="bl-jitter">–</span></span></div>
+        <div class="metric"><span class="m-label">Target Time</span><span class="m-value"><span id="bl-acq">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Samples</span><span class="m-value"><span id="bl-samples">–</span></span></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- MIDDLE COLUMN -->
+  <section class="col-mid">
+
+    <div class="card">
+      <h2>Live Health Trend</h2>
+      <svg id="trend-chart" viewBox="0 0 640 260" preserveAspectRatio="none" role="img" aria-label="Health trend chart"></svg>
+      <div class="legend">
+        <span class="lg"><i class="sw fatigue"></i>Fatigue</span>
+        <span class="lg"><i class="sw stress"></i>Stress</span>
+        <span class="lg"><i class="sw anxiety"></i>Anxiety</span>
+        <span class="lg"><i class="sw motor"></i>Motor Risk</span>
+      </div>
+    </div>
+
+    <div class="card" id="last-report-card">
+      <h2>Last 2-Minute Report</h2>
+      <div id="no-report" class="collecting visible">No report yet — the first one appears after two analysis windows (or run a demo scenario).</div>
+      <div id="report-content" class="hidden">
+        <div class="report-head">
+          <span id="report-range" class="report-range"></span>
+          <span id="report-overall" class="report-overall"></span>
+        </div>
+        <div class="report-scores">
+          <div class="metric"><span class="m-label">Fatigue</span><span class="m-value"><span id="r-fatigue">–</span><small>%</small></span></div>
+          <div class="metric"><span class="m-label">Stress</span><span class="m-value"><span id="r-stress">–</span><small>%</small></span></div>
+          <div class="metric"><span class="m-label">Anxiety</span><span class="m-value"><span id="r-anxiety">–</span><small>%</small></span></div>
+          <div class="metric"><span class="m-label">Motor Risk</span><span class="m-value"><span id="r-motor">–</span><small>%</small></span></div>
+        </div>
+        <h3>Behavioural Changes</h3>
+        <ul id="report-changes" class="report-changes"></ul>
+        <div class="recommendation" id="report-recommendation"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Report History</h2>
+      <div id="report-history" class="report-history">
+        <div class="collecting visible">Reports will appear here every 2 minutes.</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- RIGHT COLUMN -->
+  <section class="col-right">
+
+    <div class="card">
+      <h2>Assessment</h2>
+      <p class="hint">Clicking <b>Start Monitoring</b> opens the <b>Behavioural Health Assessment</b> in a new tab: 10 random sentences to type plus a mouse-target task. The dashboard keeps updating live while you complete it.</p>
+      <div class="assess-links">
+        <button id="btn-open-assessment" class="btn">⧉ Open Assessment Tab</button>
+      </div>
+      <div id="assess-hint" class="hint">The assessment tab captures keyboard &amp; mouse behaviour; this page shows the analysis.</div>
+    </div>
+
+    <div class="card">
+      <h2>Demo Mode</h2>
+      <p class="hint">Simulated behavioural sessions are pushed through the exact same pipeline: feature extraction → personal baseline → trained model → score fusion → report engine.</p>
+      <div class="demo-grid">
+        <button class="btn demo normal" data-scenario="normal">NORMAL</button>
+        <button class="btn demo fatigue" data-scenario="fatigue">FATIGUE</button>
+        <button class="btn demo stress" data-scenario="stress">STRESS</button>
+        <button class="btn demo anxiety" data-scenario="anxiety">ANXIETY</button>
+        <button class="btn demo motor" data-scenario="motor">MOTOR RISK</button>
+      </div>
+      <div id="demo-status" class="hint">Run a scenario to see predictions respond instantly.</div>
+    </div>
+
+  </section>
+</main>
+
+<footer class="footer">
+  <p><strong>Privacy:</strong> Typed content is never stored. Only behavioural timing and movement features are analyzed.</p>
+  <p class="disclaimer">This prototype provides behavioural screening indicators and is not a medical diagnostic system. Motor-risk results do not diagnose Parkinson's disease or any other condition.</p>
+</footer>
+
+<script src="/monitor.js"></script>
+</body>
+</html>

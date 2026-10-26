@@ -1,0 +1,188 @@
+[
+  {
+    "start_time": "2026-09-12 10:35:08",
+    "end_time": "2026-09-12 10:36:08",
+    "avg_fatigue": 8,
+    "avg_stress": 39,
+    "avg_anxiety": 39,
+    "avg_motor_risk": 42,
+    "overall_status": "MODERATE",
+    "behavioural_changes": [
+      "Typing speed increased 16% from baseline",
+      "Dwell time decreased 28%",
+      "Flight time decreased 15%"
+    ],
+    "recommendation": "A short pause and a stretch may help; some behavioural signals are moderately elevated versus your baseline."
+  },
+  {
+    "start_time": "2026-09-12 10:45:01",
+    "end_time": "2026-09-12 10:46:01",
+    "avg_fatigue": 10,
+    "avg_stress": 60,
+    "avg_anxiety": 20,
+    "avg_motor_risk": 16,
+    "overall_status": "ELEVATED",
+    "behavioural_changes": [
+      "Typing speed decreased 47% from baseline",
+      "Dwell time increased 26%",
+      "Flight time increased 88%"
+    ],
+    "recommendation": "Take a proper break and resume at a comfortable pace. Behavioural screening only - not a medical assessment."
+  },
+  {
+    "start_time": "2026-09-12 10:47:01",
+    "end_time": "2026-09-12 10:48:01",
+    "avg_fatigue": 3,
+    "avg_stress": 62,
+    "avg_anxiety": 20,
+    "avg_motor_risk": 20,
+    "overall_status": "ELEVATED",
+    "behavioural_changes": [
+      "Typing speed decreased 52% from baseline",
+      "Dwell time increased 30%",
+      "Flight time increased 115%",
+      "Backspace rate increased 80%"
+    ],
+    "recommendation": "Take a proper break and resume at a comfortable pace. Behavioural screening only - not a medical assessment."
+  },
+  {
+    "start_time": "2026-09-12 10:51:01",
+    "end_time": "2026-09-12 10:52:01",
+    "avg_fatigue": 1,
+    "avg_stress": 82,
+    "avg_anxiety": 6,
+    "avg_motor_risk": 4,
+    "overall_status": "ELEVATED",
+    "behavioural_changes": [
+      "Typing speed increased 356% from baseline",
+      "Dwell time decreased 95%",
+      "Flight time decreased 74%",
+      "Backspace rate increased 1304%"
+    ],
+    "recommendation": "Take a proper break and resume at a comfortable pace. Behavioural screening only - not a medical assessment."
+  },
+  {
+    "start_time": "2026-09-12 11:07:56",
+    "end_time": "2026-09-12 11:07:56",
+    "avg_fatigue": 0,
+    "avg_stress": 100,
+    "avg_anxiety": 0,
+    "avg_motor_risk": 26,
+    "overall_status": "ELEVATED",
+    "behavioural_changes": [
+      "Typing speed decreased 16% from baseline",
+      "Dwell time decreased 10%",
+      "Backspace rate increased 93%"
+    ],
+    "recommendation": "Take a proper break and resume at a comfortable pace. Behavioural screening only - not a medical assessment."
+  },
+  {
+    "start_time": "2026-09-12 11:18:03",
+    "end_time": "2026-09-12 11:19:03",
+    "avg_fatigue": 29,
+    "avg_stress": 28,
+    "avg_anxiety": 46,
+    "avg_motor_risk": 66,
+    "overall_status": "ELEVATED",
+    "behavioural_changes": [
+      "Typing speed decreased 70% from baseline",
+      "Dwell time increased 18%",
+      "Flight time increased 383%",
+      "Backspace rate increased 65%"
+    ],
+    "recommendation": "Take a proper break and resume at a comfortable pace. Behavioural screening only - not a medical assessment."
+  },
+  {
+    "start_time": "2026-09-12 11:20:02",
+    "end_time": "2026-09-12 11:21:02",
+    "avg_fatigue": 20,
+    "avg_stress": 22,
+    "avg_anxiety": 20,
+    "avg_motor_risk": 32,
+    "overall_status": "MODERATE",
+    "behavioural_changes": [
+      "Typing speed decreased 100% from baseline",
+      "Dwell time decreased 100%",
+      "Flight time decreased 100%",
+      "Backspace rate decreased 100%"
+    ],
+    "recommendation": "A short pause and a stretch may help; some behavioural signals are moderately elevated versus your baseline."
+  },
+  {
+    "start_time": "2026-09-12 11:38:42",
+    "end_time": "2026-09-12 11:39:42",
+    "avg_fatigue": 4,
+    "avg_stress": 25,
+    "avg_anxiety": 22,
+    "avg_motor_risk": 25,
+    "overall_status": "NORMAL",
+    "behavioural_changes": [
+      "Typing speed decreased 100% from baseline",
+      "Dwell time decreased 100%",
+      "Flight time decreased 100%",
+      "Backspace rate decreased 100%"
+    ],
+    "recommendation": "Your recent behaviour stayed close to your personal baseline. Keep going comfortably."
+  },
+  {
+    "start_time": "2026-09-12 11:40:42",
+    "end_time": "2026-09-12 11:41:42",
+    "avg_fatigue": 14,
+    "avg_stress": 23,
+    "avg_anxiety": 20,
+    "avg_motor_risk": 25,
+    "overall_status": "NORMAL",
+    "behavioural_changes": [
+      "Typing speed decreased 100% from baseline",
+      "Dwell time decreased 74%",
+      "Flight time decreased 100%",
+      "Backspace rate decreased 100%"
+    ],
+    "recommendation": "Your recent behaviour stayed close to your personal baseline. Keep going comfortably."
+  },
+  {
+    "start_time": "2026-09-12 11:42:43",
+    "end_time": "2026-09-12 11:43:43",
+    "avg_fatigue": 22,
+    "avg_stress": 46,
+    "avg_anxiety": 40,
+    "avg_motor_risk": 56,
+    "overall_status": "MODERATE",
+    "behavioural_changes": [
+      "Typing speed decreased 62% from baseline",
+      "Dwell time increased 18%",
+      "Flight time increased 198%",
+      "Backspace rate decreased 40%"
+    ],
+    "recommendation": "A short pause and a stretch may help; some behavioural signals are moderately elevated versus your baseline."
+  },
+  {
+    "start_time": "2026-09-12 11:44:43",
+    "end_time": "2026-09-12 11:45:43",
+    "avg_fatigue": 22,
+    "avg_stress": 26,
+    "avg_anxiety": 46,
+    "avg_motor_risk": 45,
+    "overall_status": "MODERATE",
+    "behavioural_changes": [
+      "Typing speed decreased 45% from baseline",
+      "Flight time increased 265%",
+      "Backspace rate increased 126%"
+    ],
+    "recommendation": "A short pause and a stretch may help; some behavioural signals are moderately elevated versus your baseline."
+  },
+  {
+    "start_time": "2026-09-12 11:46:43",
+    "end_time": "2026-09-12 11:47:43",
+    "avg_fatigue": 14,
+    "avg_stress": 44,
+    "avg_anxiety": 28,
+    "avg_motor_risk": 29,
+    "overall_status": "MODERATE",
+    "behavioural_changes": [
+      "Typing speed increased 27% from baseline",
+      "Flight time decreased 32%"
+    ],
+    "recommendation": "A short pause and a stretch may help; some behavioural signals are moderately elevated versus your baseline."
+  }
+]

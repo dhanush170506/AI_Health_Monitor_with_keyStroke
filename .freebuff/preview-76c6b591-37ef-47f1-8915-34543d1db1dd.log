@@ -1,0 +1,8 @@
+================================================================
+  AI HEALTH MONITORING SYSTEM - behavioural screening prototype
+  NOT a medical diagnostic system.
+  Model ready: True
+  Open http://127.0.0.1:5000 in your browser.
+================================================================
+ * Serving Flask app 'app'
+ * Debug mode: off

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Behavioural Health Assessment</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/assessment.css">
+</head>
+<body class="assessment-body">
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-icon">🫀</div>
+    <div>
+      <h1>BEHAVIOURAL HEALTH ASSESSMENT</h1>
+      <p class="subtitle">Controlled typing &amp; mouse tasks for consistent behavioural analysis</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div id="status-pill" class="status-pill idle"><span class="dot"></span><span id="status-text">● Connecting…</span></div>
+    <div id="session-clock" class="session-clock">00:00</div>
+    <button id="btn-dashboard" class="btn">⌂ Dashboard</button>
+    <button id="btn-stop-assessment" class="btn danger">⏸ Stop Monitoring</button>
+  </div>
+</header>
+
+<!-- ======================= ASSESSMENT VIEW ======================= -->
+<main id="view-assessment" class="assessment-layout">
+
+  <!-- LEFT: typing test -->
+  <section class="col-main">
+
+    <div class="card">
+      <div class="assess-head">
+        <div class="progress-block">
+          <span class="progress-label">Progress</span>
+          <span id="sentence-progress" class="progress-value">Sentence 1 / 10</span>
+          <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+        </div>
+        <div class="timer-block">
+          <span class="progress-label">Timer</span>
+          <span id="assess-timer" class="assess-timer">00:00</span>
+        </div>
+      </div>
+
+      <div class="sentence-stage">
+        <div id="sentence-display" class="sentence-display" aria-label="Sentence to type"></div>
+      </div>
+
+      <div class="typing-input-wrap">
+        <input id="typing-input" class="typing-input" type="text"
+               autocomplete="off" autocorrect="off" autocapitalize="off"
+               spellcheck="false" placeholder="Start typing the sentence above…">
+        <div class="typing-hint-row">
+          <span id="typing-feedback" class="typing-hint">Type the sentence exactly as shown. Corrections are allowed.</span>
+          <span id="wpm-live" class="wpm-live">– WPM</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Mouse Activity Area</h2>
+      <p class="hint">Move your mouse naturally through the area and click the highlighted targets when they appear.</p>
+      <div id="mouse-area" class="mouse-area assess-mouse">
+        <div id="target-layer"></div>
+        <div id="mouse-hint" class="mouse-hint">Waiting for the first target…</div>
+      </div>
+      <div class="target-stats">
+        <span>Targets hit: <b id="targets-hit">0</b></span>
+        <span>Active: <b id="targets-active">0</b></span>
+        <span>Avg acquisition: <b id="avg-acq">–</b> ms</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- RIGHT: live metrics + per-sentence status -->
+  <section class="col-side">
+
+    <div class="card">
+      <h2>Live Behavioural Metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric"><span class="m-label">WPM</span><span class="m-value"><span id="m-wpm">–</span></span></div>
+        <div class="metric"><span class="m-label">Dwell</span><span class="m-value"><span id="m-dwell">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Flight</span><span class="m-value"><span id="m-flight">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Errors</span><span class="m-value"><span id="m-errors">–</span></span></div>
+        <div class="metric"><span class="m-label">Backspace Rate</span><span class="m-value"><span id="m-backspace">–</span> <small>%</small></span></div>
+        <div class="metric"><span class="m-label">Mouse Speed</span><span class="m-value"><span id="m-mspeed">–</span> <small>px/s</small></span></div>
+        <div class="metric"><span class="m-label">Mouse Jitter</span><span class="m-value"><span id="m-jitter">–</span></span></div>
+        <div class="metric"><span class="m-label">Target Time</span><span class="m-value"><span id="m-acq">–</span> <small>ms</small></span></div>
+      </div>
+      <div id="collecting-msg" class="collecting">Collecting more behavioural data…</div>
+      <div id="assess-current" class="assess-current hidden">
+        <div class="ac-title">Current behavioural state</div>
+        <div class="ac-grid">
+          <span>Fatigue</span><b id="ac-fatigue">–</b>
+          <span>Stress</span><b id="ac-stress">–</b>
+          <span>Anxiety</span><b id="ac-anxiety">–</b>
+          <span>Motor Risk</span><b id="ac-motor">–</b>
+        </div>
+        <div class="ac-overall">Overall: <b id="ac-overall">–</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Sentence Status</h2>
+      <div id="sentence-log" class="sentence-log">
+        <div class="collecting visible">Completed sentences will appear here.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Calibration</h2>
+      <div id="calib-banner" class="banner calibrating hidden">
+        <strong>CALIBRATING PERSONAL BASELINE</strong> — <span id="calib-countdown"></span>
+      </div>
+      <div id="calib-done" class="banner established hidden">
+        <strong>PERSONAL BASELINE ESTABLISHED</strong>
+      </div>
+      <div id="calib-none" class="hint">Baseline will be learned from the first ~2 minutes of assessment activity.</div>
+    </div>
+
+  </section>
+</main>
+
+<!-- ======================= COMPLETION VIEW ======================= -->
+<main id="view-complete" class="assessment-layout hidden">
+  <section class="col-main">
+    <div class="card complete-card">
+      <h2 class="complete-title">ASSESSMENT COMPLETE</h2>
+      <div id="complete-progress" class="complete-progress">10 / 10 sentences completed</div>
+
+      <div class="metrics-grid complete-metrics">
+        <div class="metric"><span class="m-label">Total Typing Time</span><span class="m-value"><span id="c-time">–</span> <small>s</small></span></div>
+        <div class="metric"><span class="m-label">Average WPM</span><span class="m-value"><span id="c-wpm">–</span></span></div>
+        <div class="metric"><span class="m-label">Avg Dwell Time</span><span class="m-value"><span id="c-dwell">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Avg Flight Time</span><span class="m-value"><span id="c-flight">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Average Error Rate</span><span class="m-value"><span id="c-errors">–</span> <small>%</small></span></div>
+        <div class="metric"><span class="m-label">Targets Completed</span><span class="m-value"><span id="c-targets">–</span></span></div>
+        <div class="metric"><span class="m-label">Avg Movement Speed</span><span class="m-value"><span id="c-mspeed">–</span> <small>px/s</small></span></div>
+        <div class="metric"><span class="m-label">Average Jitter</span><span class="m-value"><span id="c-jitter">–</span></span></div>
+      </div>
+
+      <div class="complete-msg">Behavioural analysis has been updated.</div>
+      <div class="complete-msg subtle">Assessment complete. Continue normal interaction for ongoing monitoring.</div>
+
+      <div class="complete-actions">
+        <button id="btn-return" class="btn primary">⌂ Return to Dashboard</button>
+        <button id="btn-continue" class="btn">▶ Continue Monitoring</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ======================= CONTINUE (FREE) VIEW ======================= -->
+<main id="view-continue" class="assessment-layout hidden">
+  <section class="col-main">
+    <div class="card">
+      <h2>Continue Monitoring</h2>
+      <p class="hint">Type anything you like and move your mouse below. The 1-minute analysis and 2-minute report cycle continues unchanged.</p>
+      <textarea id="free-typing" rows="7" placeholder="Continue typing here… (content is never transmitted or stored)"></textarea>
+      <div id="mouse-area-free" class="mouse-area">
+        <div class="mouse-hint">🖱 move &amp; click here</div>
+      </div>
+    </div>
+  </section>
+  <section class="col-side">
+    <div class="card">
+      <h2>Live Behavioural Metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric"><span class="m-label">WPM</span><span class="m-value"><span id="f-wpm">–</span></span></div>
+        <div class="metric"><span class="m-label">Dwell</span><span class="m-value"><span id="f-dwell">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Flight</span><span class="m-value"><span id="f-flight">–</span> <small>ms</small></span></div>
+        <div class="metric"><span class="m-label">Mouse Speed</span><span class="m-value"><span id="f-mspeed">–</span> <small>px/s</small></span></div>
+      </div>
+      <div id="collecting-msg-free" class="collecting">Collecting more behavioural data…</div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p><strong>Privacy:</strong> The system analyzes typing timing and mouse movement patterns. Typed content is not stored.</p>
+  <p class="disclaimer">Motor-risk results are behavioural screening indicators and do not diagnose Parkinson's disease or any other medical condition.</p>
+</footer>
+
+<script src="/assessment.js"></script>
+</body>
+</html>

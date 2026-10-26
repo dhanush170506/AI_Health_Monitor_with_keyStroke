@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "n_samples": 2,
+  "mean": {
+    "typing_speed_wpm": 50.93510267779263,
+    "avg_dwell_time": 97.56474944175466,
+    "dwell_std": 35.66698584207376,
+    "avg_flight_time": 184.69066017315043,
+    "flight_std": 641.1058025152131,
+    "backspace_rate": 6.944444444444444,
+    "error_rate": 6.56084656084656,
+    "typing_pause_duration": 1525.828431372514,
+    "mouse_speed": 0.0,
+    "mouse_speed_std": 0.0,
+    "mouse_acceleration": 0.0,
+    "mouse_pause_duration": 0.0,
+    "mouse_jitter": 0.0,
+    "mouse_efficiency": 0.0,
+    "click_rate": 0.0,
+    "target_acquisition_time": 0.0
+  },
+  "std": {
+    "typing_speed_wpm": 9.897855536202592,
+    "avg_dwell_time": 14.634712416263199,
+    "dwell_std": 5.350047876311064,
+    "avg_flight_time": 48.04075818712386,
+    "flight_std": 138.10243974948216,
+    "backspace_rate": 1.9641855032959645,
+    "error_rate": 1.1972178305803973,
+    "typing_pause_duration": 428.796484530966,
+    "mouse_speed": 1e-06,
+    "mouse_speed_std": 1e-06,
+    "mouse_acceleration": 1e-06,
+    "mouse_pause_duration": 1e-06,
+    "mouse_jitter": 1e-06,
+    "mouse_efficiency": 1e-06,
+    "click_rate": 1e-06,
+    "target_acquisition_time": 1e-06
+  },
+  "established": true
+}
